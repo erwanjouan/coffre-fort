@@ -32,4 +32,3 @@ nothing is written back to disk in plaintext.
 | `GET /secrets` | Return all secrets as JSON |
 | `GET /get?key=a.b.c` | Return a single value by dotted key |
 | `GET /copy?key=a.b.c` | Copy a value to the clipboard |
-# coffre-fort

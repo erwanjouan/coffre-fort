@@ -1,0 +1,7 @@
+bak
+secrets.yml
+secrets.yml.enc
+.idea
+.venv
+**/__pychache__
+__pycache__
