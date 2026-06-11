@@ -44,6 +44,24 @@ _val_cbs = ctypes.addressof(ctypes.c_byte.in_dll(_CF, "kCFTypeDictionaryValueCal
 
 
 def _const(lib, name: str) -> int:
+    """
+    Read a named constant exported by a system library.
+
+    macOS system libraries (CoreFoundation, Security) expose special constant
+    values — like kSecClass or kCFBooleanTrue — as global variables in their
+    compiled code.  ctypes lets us look them up by name and read their memory
+    address, which is how we pass them to C functions without needing a C
+    compiler.
+
+    Args:
+        lib:  The loaded library object (e.g. _CF or _SEC).
+        name: The exact name of the constant as it appears in the library
+              (e.g. "kSecClass").
+
+    Returns:
+        The integer memory address of that constant, which C functions treat
+        as a pointer to the value.
+    """
     return ctypes.c_void_p.in_dll(lib, name).value
 
 
@@ -86,6 +104,27 @@ exit(authOK ? 0 : 1)
 
 
 def _cfstr(s: str) -> int:
+    """
+    Convert a Python string into a CoreFoundation CFString object.
+
+    The macOS Security framework does not understand Python strings — it
+    expects its own CFString type.  This function hands the text to
+    CoreFoundation (the low-level Apple library that manages memory and
+    basic types) and gets back an opaque reference (just a number that
+    acts as a pointer) that we can pass to Security API calls.
+
+    Important: every CFString created here must eventually be released with
+    CFRelease() to avoid a memory leak.
+
+    Args:
+        s: The Python string to convert (e.g. a service name like "coffre-fort").
+
+    Returns:
+        An integer acting as a pointer to the new CFString object.
+
+    Raises:
+        MemoryError: If CoreFoundation could not allocate the object.
+    """
     ref = _CF.CFStringCreateWithCString(None, s.encode("utf-8"), kCFStringEncodingUTF8)
     if not ref:
         raise MemoryError(f"CFStringCreateWithCString failed for {s!r}")
@@ -93,6 +132,28 @@ def _cfstr(s: str) -> int:
 
 
 def _cfdict(pairs) -> int:
+    """
+    Build a CoreFoundation CFDictionary from a list of key-value pairs.
+
+    The Security framework takes its arguments as dictionaries — for example,
+    "search for a Keychain item where class=GenericPassword AND service=coffre-fort".
+    Python dicts cannot be passed directly to C functions, so we build a
+    CFMutableDictionary (Apple's C-level dictionary type) instead.
+
+    Like CFString objects, this dictionary must be released with CFRelease()
+    when we are done with it.
+
+    Args:
+        pairs: A list of (key, value) tuples where each key and value is an
+               integer pointer to a CoreFoundation object (CFString, CFData,
+               or a system constant).
+
+    Returns:
+        An integer acting as a pointer to the new CFDictionary object.
+
+    Raises:
+        MemoryError: If CoreFoundation could not allocate the dictionary.
+    """
     d = _CF.CFDictionaryCreateMutable(None, 0, _key_cbs, _val_cbs)
     if not d:
         raise MemoryError("CFDictionaryCreateMutable failed")
@@ -102,7 +163,25 @@ def _cfdict(pairs) -> int:
 
 
 def _require_touch_id() -> None:
-    """Block until the user authenticates with Touch ID; raise on failure or cancel."""
+    """
+    Show the Touch ID prompt and block until the user authenticates.
+
+    This function runs a small Swift program on the fly (passed as text to the
+    'swift -' command) that calls Apple's LocalAuthentication framework.  That
+    framework is the same one used by apps like 1Password — it displays the
+    "Touch ID" dialog and waits for a fingerprint scan.
+
+    We use Swift here because Python has no direct binding to LocalAuthentication,
+    but macOS ships with the Swift compiler so no installation is required.
+
+    The Swift script exits with code 0 on success and code 1 on failure or
+    cancellation.  We translate a non-zero exit into a Python exception so the
+    caller never receives the password unless authentication succeeded.
+
+    Raises:
+        RuntimeError: If Touch ID is not available, the scan fails, or the
+                      user cancels the prompt.
+    """
     result = subprocess.run(
         ["swift", "-"],
         input=_TOUCH_ID_SCRIPT,
@@ -116,7 +195,27 @@ def _require_touch_id() -> None:
 
 
 def get_password() -> bytes:
-    """Authenticate with Touch ID then return the master password from the Keychain."""
+    """
+    Authenticate with Touch ID and return the master password stored in the Keychain.
+
+    This is the main function called every time a command needs the password
+    (encrypt, decrypt, serve).  It has two steps:
+
+    1. Touch ID — calls _require_touch_id() which shows the fingerprint prompt.
+       If the scan fails or is cancelled, we stop here and raise an error.
+
+    2. Keychain lookup — once authenticated, we call Apple's SecItemCopyMatching()
+       to retrieve the password bytes that were saved earlier by store_password().
+       The result comes back as a CFData object; we copy the raw bytes out of it
+       and return them as a Python bytes value.
+
+    Returns:
+        The master password as raw bytes, ready to be passed to decrypt() or encrypt().
+
+    Raises:
+        RuntimeError: If Touch ID fails, or if no Keychain entry exists yet
+                      (in which case the user needs to run 'coffre-fort keychain-store').
+    """
     _require_touch_id()
 
     svc = _cfstr(SERVICE)
