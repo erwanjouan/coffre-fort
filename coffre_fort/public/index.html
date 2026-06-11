@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Secret Editor</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jedison@latest/dist/css/jedison.min.css">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: #1a1a2e;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #0f3460;
+    }
+    header h1 { margin: 0; font-size: 1.1rem; color: #e2e8f0; }
+    .toolbar { display: flex; gap: 10px; align-items: center; }
+    button {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    #btn-save {
+      background: #0f3460;
+      color: #fff;
+    }
+    #btn-save:hover { background: #1a4a7a; }
+    #btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+    #status {
+      font-size: 0.8rem;
+      padding: 4px 10px;
+      border-radius: 4px;
+      display: none;
+    }
+    #status.ok { background: #166534; color: #bbf7d0; display: inline-block; }
+    #status.err { background: #7f1d1d; color: #fecaca; display: inline-block; }
+    #editor-container {
+      margin: 24px auto;
+      padding: 0 16px;
+    }
+    #jedison-root {
+      background: #16213e;
+      border-radius: 8px;
+      padding: 16px;
+    }
+    #jedison-root .row > .jedi-col:first-child {
+      flex: 0 0 auto;
+      width: 16.66667%;
+    }
+    #jedison-root .row > .jedi-col:last-child {
+      flex: 0 0 auto;
+      width: 83.33333%;
+    }
+    #jedison-root .jedi-editor-legend.card-header {
+      background: #0f3460;
+      color: #e2e8f0;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      padding: 12px 16px;
+      border-bottom: 2px solid #1a4a7a;
+      border-radius: 6px 6px 0 0;
+    }
+    .pw-wrapper {
+      position: relative;
+    }
+    .pw-wrapper input {
+      padding-right: 8px;
+    }
+    .pw-actions {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      gap: 2px;
+    }
+    .pw-toggle {
+      background: none;
+      border: none;
+      padding: 2px 6px;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      cursor: pointer;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+    .pw-toggle:hover {
+      color: #e2e8f0;
+      background: rgba(255,255,255,0.08);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>secrets.yml editor</h1>
+    <div class="toolbar">
+      <span id="status"></span>
+      <button id="btn-save">Save</button>
+    </div>
+  </header>
+
+  <div id="editor-container">
+    <div id="jedison-root" data-bs-theme="dark"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jedison@latest/dist/umd/jedison.umd.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+{
+  "type": "object",
+  "title": "Secrets",
+  "x-format": "nav-vertical",
+  "additionalProperties": {
+    "type": "array",
+    "x-format": "table",
+    "title": "Category",
+    "items": {
+      "type": "object",
+      "title": "{{ value.name }}",
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "Name"
+        },
+        "url": {
+          "type": "string",
+          "title": "URL"
+        },
+        "login": {
+          "type": "string",
+          "title": "Login"
+        },
+        "password": {
+          "type": "string",
+          "title": "Password"
+        },
+        "comment": {
+          "type": "string",
+          "title": "Comment"
+        }
+      }
+    }
+  }
+}

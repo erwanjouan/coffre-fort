@@ -4,7 +4,7 @@ ENC     ?= secrets.yml.enc
 SRC     ?= secrets.yml
 PORT    ?= 9371
 
-.PHONY: install encrypt decrypt edit serve help
+.PHONY: install encrypt decrypt serve keychain-store help
 
 ## install: create venv and install dependencies
 install: $(PYTHON)
@@ -17,9 +17,9 @@ encrypt: $(PYTHON)
 decrypt: $(PYTHON)
 	$(PYTHON) $(MAIN) decrypt $(ENC)
 
-## edit: open ENC in $$EDITOR and re-encrypt on save  (make edit ENC=secrets.yml.enc)
-edit: $(PYTHON)
-	$(PYTHON) $(MAIN) edit $(ENC)
+## keychain-store: save password in Keychain with Touch ID protection (one-time setup)
+keychain-store: $(PYTHON)
+	$(PYTHON) $(MAIN) keychain-store
 
 ## serve: start local HTTP API  (make serve ENC=secrets.yml.enc PORT=9371)
 serve: $(PYTHON)
