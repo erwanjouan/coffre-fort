@@ -2,7 +2,6 @@ import json
 import os
 import shutil
 import sys
-import webbrowser
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import parse_qs, urlparse
@@ -353,5 +352,4 @@ def cmd_serve(enc_file: str, port: int) -> None:
 
     url = f"http://127.0.0.1:{port}"
     print(f"serving editor on {url}", file=sys.stderr)
-    webbrowser.open(url)
     HTTPServer(("127.0.0.1", port), Handler).serve_forever()
